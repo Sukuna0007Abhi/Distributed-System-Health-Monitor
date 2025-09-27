@@ -686,7 +686,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - **Documentation**: [docs.company.com/health-monitor](https://docs.company.com/health-monitor)
 - **Issues**: [GitHub Issues](https://github.com/enterprise/distributed-health-monitor/issues)
 - **Slack**: #health-monitor channel
-- **Email**: security-team@company.com
+- **Email**: security-team@keptore.com
 
 ## 🙏 Acknowledgments
 
