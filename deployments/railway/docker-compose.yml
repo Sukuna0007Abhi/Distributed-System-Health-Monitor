@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-healthmonitor2024}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-healthmonitor2024} --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-healthmonitor2024}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: [
+      "nats-server",
+      "--port", "4222",
+      "--http_port", "8222",
+      "--jetstream",
+      "--store_dir", "/data",
+      "--max_memory_store", "64MB",
+      "--max_file_store", "1GB"
+    ]
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  health-monitor:
+    build: 
+      context: ../../
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+      - "8081:8081"
+    environment:
+      - PORT=${PORT:-8080}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-healthmonitor2024}@redis:6379
+      - NATS_URL=nats://nats:4222
+      - LOG_LEVEL=info
+      - ENVIRONMENT=production
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=${PORT:-8080}
+      - METRICS_PORT=8081
+      - CORIM_MAX_PROFILE_SIZE=50MB
+      - CORIM_STRICT_VALIDATION=true
+    depends_on:
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8080}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  redis_data:
+    driver: local
+  nats_data:
+    driver: local
+
+networks:
+  default:
+    name: health-monitor-network

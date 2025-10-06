@@ -1,6 +1,16 @@
 # Enterprise-grade Distributed System Health Monitor
 
+> 🌟 **Live Demo**: [https://health-monitor-demo.railway.app](https://health-monitor-demo.railway.app) (Deploy your own below!)
+
 A comprehensive, enterprise-ready distributed system health monitor with RATS-compliant attestation framework, ML-based anomaly detection, hardware-backed attestation, and multi-cloud federation support.
+
+## 🚀 Quick Deploy
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/NvLBDl?referralCode=alphasec)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
+
+> **Resume-Ready**: Use the live deployment URL from above in your resume to showcase this project to employers!
 
 ## 🚀 Features
 
@@ -73,13 +83,27 @@ A comprehensive, enterprise-ready distributed system health monitor with RATS-co
 
 ## 🚀 Quick Start
 
-### 1. Clone and Build
+### Option 1: Live Demo (Resume Ready! 🎯)
+
+**Deploy to the cloud in 2 minutes** and get a live URL for your resume:
+
+1. **Railway** (Recommended): Click [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/NvLBDl?referralCode=alphasec)
+2. **Heroku**: Click [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
+3. **Render**: Click [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
+
+After deployment, add your live URL to your resume:
+> **📝 Resume Example**: "Live Demo: https://your-app-name.railway.app"
+
+### Option 2: Local Development
 
 ```bash
-git clone https://github.com/enterprise/distributed-health-monitor.git
-cd distributed-health-monitor
+git clone https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor.git
+cd Distributed-System-Health-Monitor
 
-# Build the application
+# Quick start with Docker Compose
+docker-compose up --build
+
+# OR build locally
 go build -o health-monitor cmd/main.go
 ```
 
@@ -321,21 +345,32 @@ curl https://localhost:8443/api/v1/cluster/peers
 
 ### CoRIM Endpoints
 
+> 💡 **Try it live**: Replace `localhost:8080` with your deployment URL (e.g., `your-app.railway.app`)
+
 #### POST /api/v1/corim/profiles
 Upload a new CoRIM profile.
 
 ```bash
-curl -X POST https://localhost:8443/api/v1/corim/profiles \
-  -F "file=@example-tpm.cbor" \
-  -F "name=TPM Reference Values" \
-  -F "description=Reference values for TPM 2.0 attestation"
+# Local development
+curl -X POST http://localhost:8080/api/v1/corim/profiles \
+  -H "Content-Type: application/corim+cbor" \
+  --data-binary @examples/sample_corim_profile.cbor
+
+# Live demo (use your deployment URL)
+curl -X POST https://your-app.railway.app/api/v1/corim/profiles \
+  -H "Content-Type: application/corim+cbor" \
+  --data-binary @examples/sample_corim_profile.cbor
 ```
 
 #### GET /api/v1/corim/profiles
 List all CoRIM profiles.
 
 ```bash
-curl https://localhost:8443/api/v1/corim/profiles
+# Local
+curl http://localhost:8080/api/v1/corim/profiles
+
+# Live demo
+curl https://your-app.railway.app/api/v1/corim/profiles
 ```
 
 #### POST /api/v1/corim/reference-values/query
@@ -743,12 +778,26 @@ sast-scan
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
+## � For Your Resume
+
+**Perfect for showcasing to employers!** This project demonstrates:
+
+✅ **Enterprise Architecture**: Microservices, distributed systems, cloud-native design  
+✅ **Advanced Security**: Hardware attestation, zero-trust architecture, cryptographic validation  
+✅ **Modern Tech Stack**: Go, Redis, NATS, Kubernetes, Docker, Prometheus  
+✅ **Industry Standards**: NIST, RATS, CoRIM, SPIFFE compliance  
+✅ **DevOps Excellence**: CI/CD, monitoring, observability, infrastructure-as-code  
+✅ **Production Ready**: Live deployment with comprehensive documentation  
+
+**Resume Line Example:**
+> "Developed enterprise-grade distributed system health monitor with CoRIM attestation integration, deployed on Railway/Heroku with Redis clustering and NATS messaging. [Live Demo](https://your-app.railway.app) | [GitHub](https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)"
+
 ## 🆘 Support
 
-- **Documentation**: [docs.company.com/health-monitor](https://docs.company.com/health-monitor)
-- **Issues**: [GitHub Issues](https://github.com/enterprise/distributed-health-monitor/issues)
-- **Slack**: #health-monitor channel
-- **Email**: security-team@keptore.com
+- **Live Demo**: Use any of the deployment buttons above to create your own instance
+- **Issues**: [GitHub Issues](https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor/issues)
+- **Documentation**: See [DEPLOYMENT.md](DEPLOYMENT.md) and [RUNBOOK.md](RUNBOOK.md)
+- **Cloud Deployment**: Run `./scripts/cloud-deploy.sh` for deployment guidance
 
 ## 🙏 Acknowledgments
 

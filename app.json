@@ -1,0 +1,44 @@
+{
+  "name": "distributed-system-health-monitor",
+  "description": "Enterprise-grade distributed system health monitoring with CoRIM attestation integration",
+  "image": "heroku/go:1.21",
+  "repository": "https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor",
+  "keywords": ["go", "monitoring", "health-check", "corim", "attestation", "distributed-systems"],
+  "env": {
+    "GO_VERSION": {
+      "description": "Go version to use",
+      "value": "1.21"
+    },
+    "LOG_LEVEL": {
+      "description": "Application log level",
+      "value": "info"
+    },
+    "ENVIRONMENT": {
+      "description": "Application environment",
+      "value": "production"
+    },
+    "CORIM_STRICT_VALIDATION": {
+      "description": "Enable strict CoRIM validation",
+      "value": "true"
+    },
+    "CORIM_MAX_PROFILE_SIZE": {
+      "description": "Maximum CoRIM profile size",
+      "value": "50MB"
+    }
+  },
+  "addons": [
+    "heroku-redis:mini",
+    "papertrail:choklad"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/go"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  }
+}

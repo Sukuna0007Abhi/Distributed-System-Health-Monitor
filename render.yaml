@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: health-monitor
+    env: go
+    region: oregon
+    plan: starter
+    buildCommand: go build -o health-monitor cmd/main.go
+    startCommand: ./health-monitor
+    envVars:
+      - key: PORT
+        sync: false
+      - key: LOG_LEVEL
+        value: info
+      - key: ENVIRONMENT
+        value: production
+      - key: CORIM_STRICT_VALIDATION
+        value: "true"
+      - key: CORIM_MAX_PROFILE_SIZE
+        value: "50MB"
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: health-monitor-redis
+          property: connectionString
+    healthCheckPath: /health
+    
+  - type: redis
+    name: health-monitor-redis
+    region: oregon
+    plan: starter
+    maxmemoryPolicy: allkeys-lru

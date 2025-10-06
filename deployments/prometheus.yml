@@ -1,0 +1,51 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Health Monitor Application
+  - job_name: 'health-monitor'
+    static_configs:
+      - targets: ['health-monitor:9090']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    scheme: http
+
+  # Redis Exporter (if using redis_exporter)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # NATS Exporter
+  - job_name: 'nats'
+    static_configs:
+      - targets: ['nats:7777']
+    scrape_interval: 30s
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node exporter (if deployed)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+# Alerting rules for CoRIM and attestation monitoring
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Example alerting rules
+# rule_files:
+#   - "corim_alerts.yml"
+#   - "attestation_alerts.yml"
