@@ -1,9 +1,17 @@
 [build]
-  publish = "dist"
-  command = "go build -o dist/health-monitor cmd/main.go"
+  publish = "."
+  command = "echo 'Static site with serverless functions - no build needed'"
 
 [build.environment]
   GO_VERSION = "1.21"
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/health"
+  to = "/.netlify/functions/health"
+  status = 200
 
 [[redirects]]
   from = "/health"
@@ -12,18 +20,15 @@
 
 [[redirects]]
   from = "/api/v1/corim/*"
-  to = "/.netlify/functions/corim/:splat"
+  to = "/.netlify/functions/corim"
+  status = 200
+
+[[redirects]]
+  from = "/api/corim"
+  to = "/.netlify/functions/corim"
   status = 200
 
 [[redirects]]
   from = "/metrics"
-  to = "/.netlify/functions/metrics"
+  to = "/.netlify/functions/health"
   status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-[functions]
-  directory = "netlify/functions"
