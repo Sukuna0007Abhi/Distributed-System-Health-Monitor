@@ -15,6 +15,7 @@ type Config struct {
 	NATS        NATSConfig        `mapstructure:"nats"`
 	Kafka       KafkaConfig       `mapstructure:"kafka"`
 	Attestation AttestationConfig `mapstructure:"attestation"`
+	CoRIM       CoRIMConfig       `mapstructure:"corim"`
 	Security    SecurityConfig    `mapstructure:"security"`
 	Logging     LoggingConfig     `mapstructure:"logging"`
 	Metrics     MetricsConfig     `mapstructure:"metrics"`
@@ -276,6 +277,44 @@ type ShieldedVMsConfig struct {
 	IntegrityMonitoring    bool `mapstructure:"integrity_monitoring"`
 }
 
+// CoRIMConfig contains configuration for CoRIM profile management
+type CoRIMConfig struct {
+	Enabled      bool                     `mapstructure:"enabled"`
+	ProfilesPath string                   `mapstructure:"profiles_path"`
+	AutoLoad     bool                     `mapstructure:"auto_load"`
+	Storage      CoRIMStorageConfig       `mapstructure:"storage"`
+	Parser       CoRIMParserConfig        `mapstructure:"parser"`
+	Sources      []CoRIMSourceConfig      `mapstructure:"sources"`
+}
+
+type CoRIMStorageConfig struct {
+	Type           string        `mapstructure:"type"`
+	RedisAddr      string        `mapstructure:"redis_addr"`
+	RedisPassword  string        `mapstructure:"redis_password"`
+	RedisDB        int           `mapstructure:"redis_db"`
+	KeyPrefix      string        `mapstructure:"key_prefix"`
+	TTL            time.Duration `mapstructure:"ttl"`
+	MaxConnections int           `mapstructure:"max_connections"`
+	ConnectTimeout time.Duration `mapstructure:"connect_timeout"`
+	ReadTimeout    time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout   time.Duration `mapstructure:"write_timeout"`
+}
+
+type CoRIMParserConfig struct {
+	MaxFileSize      int64 `mapstructure:"max_file_size"`
+	ValidateOnLoad   bool  `mapstructure:"validate_on_load"`
+	StrictMode       bool  `mapstructure:"strict_mode"`
+	EnableMetrics    bool  `mapstructure:"enable_metrics"`
+	EnableDebugLogs  bool  `mapstructure:"enable_debug_logs"`
+}
+
+type CoRIMSourceConfig struct {
+	Type    string            `mapstructure:"type"`
+	Path    string            `mapstructure:"path"`
+	Enabled bool              `mapstructure:"enabled"`
+	Options map[string]string `mapstructure:"options"`
+}
+
 // Load loads configuration from file
 func Load(configPath string) (*Config, error) {
 	viper.SetConfigFile(configPath)
@@ -403,4 +442,23 @@ func setDefaults() {
 	viper.SetDefault("consensus.max_append_entries", 64)
 	viper.SetDefault("consensus.snapshot_interval", "120s")
 	viper.SetDefault("consensus.snapshot_threshold", 8192)
+
+	// CoRIM defaults
+	viper.SetDefault("corim.enabled", false)
+	viper.SetDefault("corim.profiles_path", "./configs/corim-profiles")
+	viper.SetDefault("corim.auto_load", true)
+	viper.SetDefault("corim.storage.type", "redis")
+	viper.SetDefault("corim.storage.redis_addr", "localhost:6379")
+	viper.SetDefault("corim.storage.redis_db", 0)
+	viper.SetDefault("corim.storage.key_prefix", "corim")
+	viper.SetDefault("corim.storage.ttl", "24h")
+	viper.SetDefault("corim.storage.max_connections", 10)
+	viper.SetDefault("corim.storage.connect_timeout", "5s")
+	viper.SetDefault("corim.storage.read_timeout", "3s")
+	viper.SetDefault("corim.storage.write_timeout", "3s")
+	viper.SetDefault("corim.parser.max_file_size", 10485760) // 10MB
+	viper.SetDefault("corim.parser.validate_on_load", true)
+	viper.SetDefault("corim.parser.strict_mode", false)
+	viper.SetDefault("corim.parser.enable_metrics", true)
+	viper.SetDefault("corim.parser.enable_debug_logs", false)
 }

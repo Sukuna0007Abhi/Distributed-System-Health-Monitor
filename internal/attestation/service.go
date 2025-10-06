@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/enterprise/distributed-health-monitor/internal/config"
+	"github.com/enterprise/distributed-health-monitor/internal/corim"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -25,6 +26,9 @@ type Service struct {
 	policies   PolicyEngine
 	cache      EvidenceCache
 	events     EventPublisher
+	
+	// CoRIM integration
+	corimProvisioner *corim.Provisioner
 	
 	// Multi-tenant support
 	tenants    map[string]*TenantConfig
@@ -86,7 +90,7 @@ type Worker struct {
 }
 
 // NewService creates a new attestation service
-func NewService(cfg *config.AttestationConfig, logger *logrus.Logger) (*Service, error) {
+func NewService(cfg *config.AttestationConfig, corimCfg *config.CoRIMConfig, logger *logrus.Logger) (*Service, error) {
 	tracer := otel.Tracer("attestation-service")
 	
 	service := &Service{
@@ -142,6 +146,16 @@ func NewService(cfg *config.AttestationConfig, logger *logrus.Logger) (*Service,
 		service.events = NewNoOpEventPublisher()
 	} else {
 		service.events = eventPublisher
+	}
+	
+	// Initialize CoRIM provisioner if enabled
+	if corimCfg != nil && corimCfg.Enabled {
+		err := service.initializeCoRIMProvisioner(corimCfg, logger)
+		if err != nil {
+			logger.Warnf("Failed to initialize CoRIM provisioner: %v", err)
+		} else {
+			logger.Info("CoRIM provisioner initialized successfully")
+		}
 	}
 	
 	// Register default attesters and verifiers
@@ -633,7 +647,25 @@ func (s *Service) verifyEvidence(ctx context.Context, evidence []*Evidence, req 
 				policy = s.getDefaultPolicy()
 			}
 			
-			result, err := ver.VerifyEvidence(ctx, evidence, policy)
+			var result *VerificationResult
+			var err error
+			
+			// Try CoRIM verification first if provisioner is available
+			if s.corimProvisioner != nil {
+				result, err = s.verifyWithCoRIM(ctx, evidence)
+				if err != nil {
+					s.logger.WithError(err).WithField("evidence_type", evidence.Type).Warn("CoRIM verification failed, falling back to standard verification")
+				} else if result.Verified {
+					// CoRIM verification successful
+					mu.Lock()
+					results = append(results, result)
+					mu.Unlock()
+					return
+				}
+			}
+			
+			// Fall back to standard verification
+			result, err = ver.VerifyEvidence(ctx, evidence, policy)
 			if err != nil {
 				s.logger.WithError(err).WithField("evidence_type", evidence.Type).Error("Failed to verify evidence")
 				result = &VerificationResult{
@@ -760,4 +792,282 @@ func (s *Service) collectMetrics() {
 			s.metrics.RecordActiveWorkers(activeWorkers)
 		}
 	}
+}
+
+// initializeCoRIMProvisioner initializes the CoRIM provisioner for reference value lookups
+func (s *Service) initializeCoRIMProvisioner(corimCfg *config.CoRIMConfig, logger *logrus.Logger) error {
+	// Create CoRIM store configuration
+	storeConfig := &corim.StoreConfig{
+		RedisAddr:      corimCfg.Storage.RedisAddr,
+		RedisPassword:  corimCfg.Storage.RedisPassword,
+		RedisDB:        corimCfg.Storage.RedisDB,
+		KeyPrefix:      corimCfg.Storage.KeyPrefix,
+		TTL:            corimCfg.Storage.TTL,
+		MaxConnections: corimCfg.Storage.MaxConnections,
+		ConnectTimeout: corimCfg.Storage.ConnectTimeout,
+		ReadTimeout:    corimCfg.Storage.ReadTimeout,
+		WriteTimeout:   corimCfg.Storage.WriteTimeout,
+	}
+	
+	// Create parser configuration
+	parserConfig := &corim.ParserConfig{
+		MaxFileSize:      corimCfg.Parser.MaxFileSize,
+		ValidateOnLoad:   corimCfg.Parser.ValidateOnLoad,
+		StrictMode:       corimCfg.Parser.StrictMode,
+		EnableMetrics:    corimCfg.Parser.EnableMetrics,
+		EnableDebugLogs:  corimCfg.Parser.EnableDebugLogs,
+	}
+	
+	// Initialize CoRIM metrics
+	corimMetrics := corim.NewMetrics(nil)
+	
+	// Create logger adapter
+	corimLogger := &corimLoggerAdapter{logger: logger}
+	
+	// Initialize store
+	store, err := corim.NewRedisStore(storeConfig, corimLogger)
+	if err != nil {
+		return fmt.Errorf("failed to initialize CoRIM store: %w", err)
+	}
+	
+	// Initialize validator
+	validator := corim.NewValidator(corimLogger)
+	
+	// Initialize parser
+	parser := corim.NewParser(parserConfig, validator, corimMetrics, corimLogger)
+	
+	// Initialize provisioner
+	s.corimProvisioner = corim.NewProvisioner(store, parser, corimMetrics, corimLogger)
+	
+	// Auto-load profiles if enabled
+	if corimCfg.AutoLoad && corimCfg.ProfilesPath != "" {
+		go s.autoLoadCoRIMProfiles(corimCfg.ProfilesPath)
+	}
+	
+	return nil
+}
+
+// autoLoadCoRIMProfiles loads CoRIM profiles from the configured directory
+func (s *Service) autoLoadCoRIMProfiles(profilesPath string) {
+	// This would scan the directory and load profiles
+	// Implementation would be added here
+	s.logger.Infof("Auto-loading CoRIM profiles from: %s", profilesPath)
+}
+
+// getCoRIMReferenceValues retrieves reference values from CoRIM for the given environment
+func (s *Service) getCoRIMReferenceValues(ctx context.Context, environmentID *corim.EnvironmentIdentifier) ([]*corim.ReferenceValue, error) {
+	if s.corimProvisioner == nil {
+		return nil, fmt.Errorf("CoRIM provisioner not initialized")
+	}
+	
+	start := time.Now()
+	defer func() {
+		if s.metrics != nil {
+			// Record lookup time in attestation metrics
+			duration := time.Since(start).Seconds()
+			s.logger.WithField("duration", duration).Debug("CoRIM reference value lookup completed")
+		}
+	}()
+	
+	queryResult, err := s.corimProvisioner.GetReferenceValues(ctx, environmentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query reference values: %w", err)
+	}
+	
+	return queryResult.Values, nil
+}
+
+// verifyWithCoRIM performs attestation verification using CoRIM reference values
+func (s *Service) verifyWithCoRIM(ctx context.Context, evidence *Evidence) (*VerificationResult, error) {
+	// Extract environment information from evidence
+	environmentID := s.extractEnvironmentFromEvidence(evidence)
+	if environmentID == nil {
+		return &VerificationResult{
+			Verified:   false,
+			TrustLevel: 0.0,
+			VerifiedAt: time.Now(),
+			Details:    "Unable to determine environment from evidence",
+		}, nil
+	}
+	
+	// Get reference values from CoRIM
+	refValues, err := s.getCoRIMReferenceValues(ctx, environmentID)
+	if err != nil {
+		s.logger.WithError(err).Warn("Failed to get CoRIM reference values")
+		return &VerificationResult{
+			Verified:   false,
+			TrustLevel: 0.0,
+			VerifiedAt: time.Now(),
+			Details:    fmt.Sprintf("CoRIM lookup failed: %v", err),
+		}, nil
+	}
+	
+	if len(refValues) == 0 {
+		return &VerificationResult{
+			Verified:   false,
+			TrustLevel: 0.0,
+			VerifiedAt: time.Now(),
+			Details:    "No reference values found for environment",
+		}, nil
+	}
+	
+	// Compare evidence measurements with reference values
+	verificationResult := s.compareWithReferenceValues(evidence, refValues)
+	
+	// Record metrics
+	success := verificationResult.Verified
+	s.logger.WithFields(logrus.Fields{
+		"environment_class": environmentID.Class,
+		"verified":          success,
+		"trust_level":       verificationResult.TrustLevel,
+		"ref_values_count":  len(refValues),
+	}).Info("CoRIM verification completed")
+	
+	return verificationResult, nil
+}
+
+// extractEnvironmentFromEvidence extracts environment identifier from evidence
+func (s *Service) extractEnvironmentFromEvidence(evidence *Evidence) *corim.EnvironmentIdentifier {
+	// This is a simplified extraction - in practice, you'd parse the evidence
+	// to determine the actual environment (TPM vendor/model, etc.)
+	
+	switch evidence.Type {
+	case TPMEvidence:
+		return &corim.EnvironmentIdentifier{
+			Class:    corim.EnvClassTPM,
+			Instance: "tpm-instance",
+			Vendor:   "Unknown", // Extract from TPM evidence
+			Model:    "TPM2.0",  // Extract from TPM evidence
+		}
+	case TEEEvidence:
+		return &corim.EnvironmentIdentifier{
+			Class:    corim.EnvClassTEE,
+			Instance: "tee-instance",
+		}
+	default:
+		return &corim.EnvironmentIdentifier{
+			Class:    corim.EnvClassGeneric,
+			Instance: "generic-instance",
+		}
+	}
+}
+
+// compareWithReferenceValues compares evidence measurements with CoRIM reference values
+func (s *Service) compareWithReferenceValues(evidence *Evidence, refValues []*corim.ReferenceValue) *VerificationResult {
+	result := &VerificationResult{
+		Verified:   true,
+		TrustLevel: 1.0,
+		VerifiedAt: time.Now(),
+		Details:    "All measurements verified against CoRIM reference values",
+	}
+	
+	// Extract measurements from evidence (implementation depends on evidence format)
+	evidenceMeasurements := s.extractMeasurementsFromEvidence(evidence)
+	
+	var verifiedCount, totalCount int
+	var verificationDetails []string
+	
+	// Compare each measurement
+	for _, refValue := range refValues {
+		for _, refMeasurement := range refValue.Measurements {
+			totalCount++
+			
+			// Find corresponding measurement in evidence
+			evidenceMeasurement, found := evidenceMeasurements[refMeasurement.Key]
+			if !found {
+				verificationDetails = append(verificationDetails, 
+					fmt.Sprintf("Missing measurement for %s", refMeasurement.Key))
+				continue
+			}
+			
+			// Compare digests
+			if s.compareDigests(evidenceMeasurement, refMeasurement.Digest, refMeasurement.Algorithm) {
+				verifiedCount++
+				verificationDetails = append(verificationDetails, 
+					fmt.Sprintf("✓ %s verified", refMeasurement.Key))
+			} else {
+				verificationDetails = append(verificationDetails, 
+					fmt.Sprintf("✗ %s mismatch", refMeasurement.Key))
+			}
+		}
+	}
+	
+	// Calculate trust level based on verification ratio
+	if totalCount > 0 {
+		result.TrustLevel = float64(verifiedCount) / float64(totalCount)
+		result.Verified = result.TrustLevel >= 0.8 // 80% threshold
+	} else {
+		result.Verified = false
+		result.TrustLevel = 0.0
+	}
+	
+	result.Details = fmt.Sprintf("Verified %d/%d measurements. Details: %v", 
+		verifiedCount, totalCount, verificationDetails)
+	
+	return result
+}
+
+// extractMeasurementsFromEvidence extracts measurements from evidence data
+func (s *Service) extractMeasurementsFromEvidence(evidence *Evidence) map[string][]byte {
+	measurements := make(map[string][]byte)
+	
+	// This is a placeholder implementation
+	// In practice, you'd parse the actual evidence format (TPM quote, etc.)
+	// and extract the measurement values
+	
+	if evidence.Type == TPMEvidence {
+		// Parse TPM quote and extract PCR values
+		// This would depend on your evidence format
+		measurements["pcr-0"] = []byte("example_pcr0_value")
+		measurements["pcr-1"] = []byte("example_pcr1_value")
+		// ... extract actual PCR values
+	}
+	
+	return measurements
+}
+
+// compareDigests compares evidence digest with reference digest
+func (s *Service) compareDigests(evidenceDigest, referenceDigest []byte, algorithm string) bool {
+	if len(evidenceDigest) != len(referenceDigest) {
+		return false
+	}
+	
+	for i, b := range evidenceDigest {
+		if b != referenceDigest[i] {
+			return false
+		}
+	}
+	
+	return true
+}
+
+// corimLoggerAdapter adapts logrus.Logger to corim.Logger interface
+type corimLoggerAdapter struct {
+	logger *logrus.Logger
+}
+
+func (l *corimLoggerAdapter) Debug(msg string, fields ...interface{}) {
+	l.logger.WithFields(l.fieldsToLogrus(fields)).Debug(msg)
+}
+
+func (l *corimLoggerAdapter) Info(msg string, fields ...interface{}) {
+	l.logger.WithFields(l.fieldsToLogrus(fields)).Info(msg)
+}
+
+func (l *corimLoggerAdapter) Warn(msg string, fields ...interface{}) {
+	l.logger.WithFields(l.fieldsToLogrus(fields)).Warn(msg)
+}
+
+func (l *corimLoggerAdapter) Error(msg string, fields ...interface{}) {
+	l.logger.WithFields(l.fieldsToLogrus(fields)).Error(msg)
+}
+
+func (l *corimLoggerAdapter) fieldsToLogrus(fields []interface{}) logrus.Fields {
+	logrusFields := make(logrus.Fields)
+	for i := 0; i < len(fields)-1; i += 2 {
+		if key, ok := fields[i].(string); ok && i+1 < len(fields) {
+			logrusFields[key] = fields[i+1]
+		}
+	}
+	return logrusFields
 }

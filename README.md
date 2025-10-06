@@ -6,6 +6,7 @@ A comprehensive, enterprise-ready distributed system health monitor with RATS-co
 
 ### Core Capabilities
 - **RATS-Compliant Attestation**: Full implementation of Remote Attestation Procedures (RATS) architecture
+- **CoRIM Integration**: Concise Reference Integrity Manifest (CoRIM) support for standardized reference value management
 - **Event-Driven Architecture**: Real-time attestation events using NATS JetStream and Apache Kafka
 - **ML-Based Anomaly Detection**: Container behavior drift detection using Isolation Forest algorithm
 - **Hardware-Backed Attestation**: TPM 2.0, Intel TXT, and AMD SVM support
@@ -219,6 +220,26 @@ logging:
   level: "info"
   format: "json"
   output: "stdout"
+
+# CoRIM Integration
+corim:
+  enabled: true
+  redis:
+    address: "localhost:6379"
+    password: ""
+    database: 0
+    key_prefix: "corim:"
+    default_ttl: "24h"
+  parser:
+    max_file_size: 10485760  # 10MB
+    validate_on_load: true
+    strict_mode: false
+    enable_metrics: true
+    enable_debug_logs: false
+  provisioner:
+    max_profiles: 1000
+    enable_bulk_operations: true
+    auto_refresh_interval: "1h"
 ```
 
 ### 3. Start Required Services
@@ -296,6 +317,47 @@ List all cluster peers and their status.
 
 ```bash
 curl https://localhost:8443/api/v1/cluster/peers
+```
+
+### CoRIM Endpoints
+
+#### POST /api/v1/corim/profiles
+Upload a new CoRIM profile.
+
+```bash
+curl -X POST https://localhost:8443/api/v1/corim/profiles \
+  -F "file=@example-tpm.cbor" \
+  -F "name=TPM Reference Values" \
+  -F "description=Reference values for TPM 2.0 attestation"
+```
+
+#### GET /api/v1/corim/profiles
+List all CoRIM profiles.
+
+```bash
+curl https://localhost:8443/api/v1/corim/profiles
+```
+
+#### POST /api/v1/corim/reference-values/query
+Query reference values by environment.
+
+```bash
+curl -X POST https://localhost:8443/api/v1/corim/reference-values/query \
+  -H "Content-Type: application/json" \
+  -d '{
+    "environment": {
+      "class": "TPM",
+      "vendor": "Infineon",
+      "model": "SLB9670"
+    }
+  }'
+```
+
+#### GET /api/v1/corim/health
+CoRIM subsystem health check.
+
+```bash
+curl https://localhost:8443/api/v1/corim/health
 ```
 
 ### Policy Management
