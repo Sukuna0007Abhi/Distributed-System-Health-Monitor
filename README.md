@@ -9,6 +9,7 @@ A comprehensive, enterprise-ready distributed system health monitor with RATS-co
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/NvLBDl?referralCode=alphasec)
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
 
 > **Resume-Ready**: Use the live deployment URL from above in your resume to showcase this project to employers!
 
@@ -87,9 +88,10 @@ A comprehensive, enterprise-ready distributed system health monitor with RATS-co
 
 **Deploy to the cloud in 2 minutes** and get a live URL for your resume:
 
-1. **Railway** (Recommended): Click [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/NvLBDl?referralCode=alphasec)
-2. **Heroku**: Click [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
-3. **Render**: Click [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
+1. **Netlify** (Fastest): Click [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
+2. **Railway**: Click [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/NvLBDl?referralCode=alphasec)
+3. **Heroku**: Click [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
+4. **Render**: Click [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
 
 After deployment, add your live URL to your resume:
 > **📝 Resume Example**: "Live Demo: https://your-app-name.railway.app"

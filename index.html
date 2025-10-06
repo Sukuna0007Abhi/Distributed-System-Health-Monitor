@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Monitor with CoRIM Integration - Live Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container { 
+            max-width: 800px; 
+            padding: 40px; 
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        h1 { 
+            font-size: 2.5em; 
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle { 
+            font-size: 1.2em; 
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        .api-demo {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            font-family: 'Courier New', monospace;
+        }
+        .endpoint {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: inline-block;
+            margin: 5px;
+        }
+        .btn:hover { 
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .github-btn { background: #333; }
+        .github-btn:hover { background: #555; }
+        .resume-tip {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 193, 7, 0.2);
+            border-radius: 15px;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Health Monitor</h1>
+        <div class="subtitle">Enterprise-grade Distributed System Health Monitoring with CoRIM Attestation Integration</div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🔒 CoRIM Integration</h3>
+                <p>Hardware attestation with TPM 2.0 and firmware validation</p>
+            </div>
+            <div class="feature">
+                <h3>⚡ Serverless Architecture</h3>
+                <p>Netlify Functions with edge computing capabilities</p>
+            </div>
+            <div class="feature">
+                <h3>🎯 Production Ready</h3>
+                <p>Enterprise monitoring with real-time validation</p>
+            </div>
+            <div class="feature">
+                <h3>📊 Resume Showcase</h3>
+                <p>Live demonstration of advanced system architecture</p>
+            </div>
+        </div>
+
+        <div class="api-demo">
+            <h3>🔗 Live API Endpoints</h3>
+            <div class="endpoint">
+                <span>Health Check:</span>
+                <a href="/health" class="btn" target="_blank">GET /health</a>
+            </div>
+            <div class="endpoint">
+                <span>CoRIM Profiles:</span>
+                <a href="/api/v1/corim/profiles" class="btn" target="_blank">GET /api/v1/corim/profiles</a>
+            </div>
+        </div>
+
+        <div style="margin: 30px 0;">
+            <a href="https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor" class="btn github-btn" target="_blank">
+                📂 View Source Code
+            </a>
+            <a href="#" onclick="testApi()" class="btn">
+                🧪 Test Live API
+            </a>
+        </div>
+
+        <div class="resume-tip">
+            <h3>💼 Resume Ready!</h3>
+            <p><strong>Perfect for your portfolio:</strong> This live demo showcases enterprise-grade system architecture, 
+            serverless computing expertise, security standards compliance, and modern DevOps practices. 
+            Add this URL to your resume to demonstrate real-world technical capabilities!</p>
+        </div>
+    </div>
+
+    <script>
+        async function testApi() {
+            try {
+                const healthResponse = await fetch('/health');
+                const healthData = await healthResponse.json();
+                
+                const corimResponse = await fetch('/api/v1/corim/profiles');
+                const corimData = await corimResponse.json();
+                
+                alert(`✅ API Test Successful!\n\nHealth Status: ${healthData.status}\nCoRIM Profiles: ${corimData.total} available\n\nThis demonstrates working enterprise APIs!`);
+            } catch (error) {
+                alert('⚠️ API test failed. This might be expected in demo mode.');
+            }
+        }
+
+        // Display current URL for resume use
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 Resume URL:', window.location.href);
+            console.log('📋 Add this URL to your resume to showcase your work!');
+        });
+    </script>
+</body>
+</html>

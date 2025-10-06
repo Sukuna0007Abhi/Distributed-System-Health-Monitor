@@ -1,0 +1,29 @@
+[build]
+  publish = "dist"
+  command = "go build -o dist/health-monitor cmd/main.go"
+
+[build.environment]
+  GO_VERSION = "1.21"
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/health"
+  status = 200
+
+[[redirects]]
+  from = "/api/v1/corim/*"
+  to = "/.netlify/functions/corim/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/metrics"
+  to = "/.netlify/functions/metrics"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  directory = "netlify/functions"
