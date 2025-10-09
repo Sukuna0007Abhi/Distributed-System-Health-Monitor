@@ -1,6 +1,6 @@
 # Enterprise-grade Distributed System Health Monitor
 
-> 🌟 **Live Demo**: [https://health-monitor-demo.railway.app](https://health-monitor-demo.railway.app) (Deploy your own below!)
+
 
 A comprehensive, enterprise-ready distributed system health monitor with RATS-compliant attestation framework, ML-based anomaly detection, hardware-backed attestation, and multi-cloud federation support.
 
