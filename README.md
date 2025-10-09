@@ -11,7 +11,6 @@ A comprehensive, enterprise-ready distributed system health monitor with RATS-co
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
 
-> **Resume-Ready**: Use the live deployment URL from above in your resume to showcase this project to employers!
 
 ## 🚀 Features
 
@@ -92,9 +91,6 @@ A comprehensive, enterprise-ready distributed system health monitor with RATS-co
 2. **Railway**: Click [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/NvLBDl?referralCode=alphasec)
 3. **Heroku**: Click [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
 4. **Render**: Click [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sukuna0007Abhi/Distributed-System-Health-Monitor)
-
-After deployment, add your live URL to your resume:
-> **📝 Resume Example**: "Live Demo: https://your-app-name.railway.app"
 
 ### Option 2: Local Development
 
